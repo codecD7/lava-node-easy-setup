@@ -17,11 +17,11 @@ ENV PATH="${PATH}:/usr/local/go/bin"
 # Clone and setup lava-config
 RUN git clone https://github.com/lavanet/lava-config.git /lava-config && \
     cd /lava-config/testnet-2 && \
-    source setup_config/setup_config.sh && \
-    mkdir -p $lavad_home_folder && \
-    mkdir -p $lava_config_folder && \
-    cp default_lavad_config_files/* $lava_config_folder && \
-    cp genesis_json/genesis.json $lava_config_folder/genesis.json
+    bash -c "source setup_config/setup_config.sh && \
+    mkdir -p \$lavad_home_folder && \
+    mkdir -p \$lava_config_folder && \
+    cp default_lavad_config_files/* \$lava_config_folder && \
+    cp genesis_json/genesis.json \$lava_config_folder"
 
 # Download cosmovisor
 RUN /usr/local/go/bin/go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.0.0
