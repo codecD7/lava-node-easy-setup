@@ -48,4 +48,4 @@ RUN /cosmovisor/genesis/bin/lavad init my-node --chain-id lava-testnet-2 --home 
 EXPOSE 26656 26657
 
 # Command to run cosmovisor
-CMD ["/usr/local/go/bin/cosmovisor", "start"]
+CMD ["/root/go/bin/cosmovisor", "start"]
