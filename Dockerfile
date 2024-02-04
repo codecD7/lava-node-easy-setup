@@ -1,11 +1,13 @@
-# Use a base image with systemd (if you really need systemd) or just Ubuntu
+# Use Ubuntu as the base image
 FROM ubuntu:20.04
 
-# Avoid prompts from apt
+# Avoid prompts from apt during the build process
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install required packages
-RUN apt update && apt install -y unzip logrotate git jq sed wget curl coreutils
+RUN apt update && apt install -y unzip logrotate git jq sed wget curl coreutils && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Go
 ENV GO_VERSION=1.20.5
@@ -24,27 +26,30 @@ RUN git clone https://github.com/lavanet/lava-config.git /lava-config && \
     cp genesis_json/genesis.json \$lava_config_folder"
 
 # Download cosmovisor
-RUN /usr/local/go/bin/go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.0.0
+ENV GOPATH="/root/go"
+ENV PATH="${PATH}:${GOPATH}/bin"
+RUN go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.0.0
 
-# Download genesis binary and setup
-RUN wget -O /lavad "https://github.com/lavanet/lava/releases/download/v0.21.1.2/lavad-v0.21.1.2-linux-amd64" && \
-    chmod +x /lavad && \
-    mkdir -p /cosmovisor/genesis/bin/ && \
-    mv /lavad /cosmovisor/genesis/bin/lavad
-
-# Set environment variables
+# Set environment variables for cosmovisor and lavad
 ENV DAEMON_NAME=lavad \
     CHAIN_ID=lava-testnet-2 \
     DAEMON_HOME=/root/.lava \
-    DAEMON_ALLOW_DOWNLOAD_BINARIES=true \
+    DAEMON_ALLOW_DOWNLOAD_BINARIES=false \
     DAEMON_LOG_BUFFER_SIZE=512 \
     DAEMON_RESTART_AFTER_UPGRADE=true \
     UNSAFE_SKIP_BACKUP=true
 
-# Initialize the chain
-RUN /cosmovisor/genesis/bin/lavad init my-node --chain-id lava-testnet-2 --home /root/.lava --overwrite
+# Create the directory structure for cosmovisor and lavad
+RUN mkdir -p ${DAEMON_HOME}/cosmovisor/genesis/bin
 
-# Expose necessary ports (adjust as needed)
+# Download genesis binary and setup
+RUN wget -O ${DAEMON_HOME}/cosmovisor/genesis/bin/lavad "https://github.com/lavanet/lava/releases/download/v0.21.1.2/lavad-v0.21.1.2-linux-amd64" && \
+    chmod +x ${DAEMON_HOME}/cosmovisor/genesis/bin/lavad
+
+# Initialize the chain
+RUN ${DAEMON_HOME}/cosmovisor/genesis/bin/lavad init my-node --chain-id $CHAIN_ID --home ${DAEMON_HOME} --overwrite
+
+# Expose necessary ports
 EXPOSE 26656 26657
 
 # Command to run cosmovisor
