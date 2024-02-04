@@ -52,5 +52,12 @@ RUN ${DAEMON_HOME}/cosmovisor/genesis/bin/lavad init my-node --chain-id $CHAIN_I
 # Expose necessary ports
 EXPOSE 26656 26657
 
+# Copy the entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Set the entrypoint
+ENTRYPOINT ["docker-entrypoint.sh"]
+
 # Command to run cosmovisor
 CMD ["/root/go/bin/cosmovisor", "start"]
